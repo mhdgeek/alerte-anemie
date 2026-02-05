@@ -623,6 +623,127 @@
                 font-size: 1.2rem;
             }
         }
+                /* Styles pour les centres de santé */
+.filter-btn {
+    padding: 8px 16px;
+    background-color: var(--medium-gray);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.filter-btn:hover {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.filter-btn.active {
+    background-color: var(--primary-green);
+    color: white;
+}
+
+.health-center-card {
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.health-center-card:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.health-center-card.selected {
+    border-color: var(--primary-green);
+    background-color: rgba(46, 204, 113, 0.05);
+}
+
+.center-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.center-type {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: var(--primary-blue);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+}
+
+.center-address {
+    color: var(--dark-gray);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.center-distance {
+    font-weight: 600;
+    color: var(--primary-green);
+    margin-bottom: 10px;
+}
+
+.center-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.direction-btn {
+    padding: 8px 15px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.call-btn {
+    padding: 8px 15px;
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+/* Carte */
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-gray);
+}
+
+/* Instructions de localisation */
+.location-instruction {
+    background-color: rgba(52, 152, 219, 0.1);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin: 15px 0;
+    border-left: 4px solid var(--primary-blue);
+}
+
     </style>
 </head>
 <body>
@@ -1007,9 +1128,10 @@
                         <i class="fas fa-hospital"></i> Orientation médicale
                     </h4>
                     <p>Si vous présentez des symptômes marqués ou un risque élevé, consultez un professionnel de santé sans tarder.</p>
-                    <button class="btn btn-danger" style="margin-top: 15px;">
-                        <i class="fas fa-map-marker-alt"></i> Trouver un centre de santé
-                    </button>
+                    
+                            <button class="btn btn-danger" onclick="findHealthCenters()" style="margin-top: 15px;">
+                                <i class="fas fa-map-marker-alt"></i> Trouver un centre de santé
+                            </button>
                 </div>
             </div>
             
@@ -1022,11 +1144,74 @@
                 </button>
             </div>
         </div>
+                <!-- ECRAN9 affichage centre de santé -->
+<div class="screen" id="screen9">
+    <div class="app-header">
+        <h2><i class="fas fa-map-marker-alt"></i> Centres de santé à proximité</h2>
+        <p>Trouvez les établissements de santé les plus proches</p>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <!-- Message de géolocalisation -->
+        <div id="locationStatus" style="background-color: var(--light-gray); padding: 15px; border-radius: var(--border-radius); margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-sync-alt fa-spin"></i>
+                <span>Localisation en cours...</span>
+            </div>
+        </div>
+        
+        <!-- Contrôles de recherche -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="searchInput" placeholder="Rechercher un type d'établissement..." style="flex-grow: 1; padding: 12px; border: 1px solid var(--medium-gray); border-radius: var(--border-radius);">
+            <button class="btn btn-primary" onclick="searchHealthCenters()">
+                <i class="fas fa-search"></i>
+            </button>
+            <button class="btn btn-outline" onclick="useCurrentLocation()">
+                <i class="fas fa-location-arrow"></i>
+            </button>
+        </div>
+        
+        <!-- Filtres -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+            <button class="filter-btn active" onclick="filterCenters('all')">Tous</button>
+            <button class="filter-btn" onclick="filterCenters('hospital')">Hôpitaux</button>
+            <button class="filter-btn" onclick="filterCenters('clinic')">Cliniques</button>
+            <button class="filter-btn" onclick="filterCenters('pharmacy')">Pharmacies</button>
+            <button class="filter-btn" onclick="filterCenters('lab')">Laboratoires</button>
+            <button class="filter-btn" onclick="filterCenters('doctor')">Médecins</button>
+        </div>
+        
+        <!-- Liste des centres -->
+        <div id="healthCentersList" style="margin-bottom: 30px;">
+            <!-- Les centres seront chargés ici dynamiquement -->
+            <div style="text-align: center; padding: 40px; color: var(--dark-gray);">
+                <i class="fas fa-map" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <p>Recherche de centres de santé...</p>
+            </div>
+        </div>
+        
+        <!-- Carte (optionnelle) -->
+        <div style="margin-top: 30px; display: none;" id="mapContainer">
+            <h3 style="margin-bottom: 15px;"><i class="fas fa-map"></i> Carte</h3>
+            <div id="map" style="width: 100%; height: 300px; border-radius: var(--border-radius); background-color: var(--light-gray);"></div>
+        </div>
+    </div>
+    
+    <div style="margin-top: auto; display: flex; justify-content: space-between;">
+        <button class="btn btn-outline" onclick="showScreen(8)">
+            <i class="fas fa-arrow-left"></i> Retour aux conseils
+        </button>
+        <button class="btn btn-primary" onclick="shareLocation()">
+            <i class="fas fa-share-alt"></i> Partager
+        </button>
+    </div>
+</div>
+
     </div>
     
     <div class="app-footer">
         <p>Application "Alerte Anémie" - Outil de pré-dépistage non médical</p>
-        <p>© 2023 - Pour concours de développement d'applications santé</p>
+        <p>© 2025 - BINT KHADIJA</p>
     </div>
 
     <script>
@@ -1531,6 +1716,14 @@
         function showAdviceScreen() {
             showScreen(8);
         }
+
+                function showHealthCentersScreen() {
+            showScreen(9);
+            // Si pas encore chargé, charger les centres
+            if (!userLocation) {
+                findHealthCenters();
+            }
+        }
         
         function goToResult() {
             showScreen(7);
@@ -1658,6 +1851,669 @@
                 console.warn("L'API de caméra n'est pas supportée par ce navigateur");
             }
         });
+                // Variables pour la géolocalisation
+let userLocation = null;
+let healthCenters = [];
+let googleMapsLoaded = false;
+
+// Fonction pour trouver les centres de santé
+async function findHealthCenters() {
+    showScreen(9);
+    
+    // Mettre à jour le statut
+    const statusElement = document.getElementById('locationStatus');
+    statusElement.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-sync-alt fa-spin"></i>
+            <span>Demande de localisation...</span>
+        </div>
+    `;
+    
+    try {
+        // Demander la permission de géolocalisation
+        userLocation = await getUserLocation();
+        
+        // Afficher la position
+        statusElement.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <i class="fas fa-check-circle" style="color: var(--primary-green);"></i>
+                    <span>Localisé: ${userLocation.city || 'Votre position'}</span>
+                </div>
+                <button class="btn btn-outline" onclick="useCurrentLocation()" style="padding: 5px 10px; font-size: 0.8rem;">
+                    <i class="fas fa-redo"></i> Actualiser
+                </button>
+            </div>
+        `;
+        
+        // Charger les centres de santé
+        await loadHealthCenters(userLocation);
+        
+    } catch (error) {
+        console.error("Erreur de géolocalisation:", error);
+        
+        // Si la géolocalisation échoue, utiliser une position par défaut
+        statusElement.innerHTML = `
+            <div style="color: var(--primary-red);">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Localisation non disponible. Utilisation de Paris comme position par défaut.</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <button class="btn btn-outline" onclick="enterManualLocation()" style="padding: 8px 15px;">
+                    <i class="fas fa-map-pin"></i> Entrer une adresse manuellement
+                </button>
+            </div>
+        `;
+        
+        // Position par défaut (Paris)
+        userLocation = {
+            latitude: 48.8566,
+            longitude: 2.3522,
+            city: "Paris"
+        };
+        
+        await loadHealthCenters(userLocation);
+    }
+}
+
+// Obtenir la position de l'utilisateur
+function getUserLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error("Géolocalisation non supportée par le navigateur"));
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                try {
+                    // Récupérer le nom de la ville via une API de géocodage
+                    const city = await getCityName(latitude, longitude);
+                    
+                    resolve({
+                        latitude,
+                        longitude,
+                        city,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch (error) {
+                    // Si l'API de géocodage échoue, retourner juste les coordonnées
+                    resolve({
+                        latitude,
+                        longitude,
+                        city: "Position actuelle",
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            },
+            (error) => {
+                let errorMessage;
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = "Permission de localisation refusée";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = "Position indisponible";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = "Délai de localisation dépassé";
+                        break;
+                    default:
+                        errorMessage = "Erreur inconnue";
+                }
+                reject(new Error(errorMessage));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
+// Récupérer le nom de la ville depuis les coordonnées
+async function getCityName(latitude, longitude) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
+        );
+        
+        if (!response.ok) {
+            throw new Error("Erreur de géocodage");
+        }
+        
+        const data = await response.json();
+        return data.address.city || data.address.town || data.address.village || "Localité inconnue";
+    } catch (error) {
+        console.warn("Impossible de récupérer le nom de la ville:", error);
+        return "Position actuelle";
+    }
+}
+
+// Charger les centres de santé
+async function loadHealthCenters(location) {
+    const centersList = document.getElementById('healthCentersList');
+    
+    // Afficher un indicateur de chargement
+    centersList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: var(--dark-gray);">
+            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+            <p>Recherche des centres de santé à proximité...</p>
+        </div>
+    `;
+    
+    try {
+        // Dans une vraie application, vous appelleriez une API ici
+        // Pour la démo, nous utiliserons des données simulées
+        healthCenters = await simulateHealthCentersAPI(location);
+        
+        // Afficher les centres
+        displayHealthCenters(healthCenters);
+        
+        // Charger OpenStreetMap si disponible
+        loadOpenStreetMap(location);
+        
+    } catch (error) {
+        console.error("Erreur chargement centres:", error);
+        centersList.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Impossible de charger les centres de santé. Veuillez réessayer plus tard.</p>
+                <button class="btn btn-outline" onclick="loadHealthCenters(location)" style="margin-top: 10px;">
+                    <i class="fas fa-redo"></i> Réessayer
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Simuler une API de centres de santé
+function simulateHealthCentersAPI(location) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // Données simulées de centres de santé
+            const centerTypes = ['hospital', 'clinic', 'pharmacy', 'lab', 'doctor'];
+            const typeNames = {
+                'hospital': 'Hôpital',
+                'clinic': 'Clinique',
+                'pharmacy': 'Pharmacie',
+                'lab': 'Laboratoire',
+                'doctor': 'Cabinet médical'
+            };
+            
+            const centers = [];
+            
+            // Générer 8-12 centres aléatoires
+            const centerCount = 8 + Math.floor(Math.random() * 5);
+            
+            for (let i = 0; i < centerCount; i++) {
+                const type = centerTypes[Math.floor(Math.random() * centerTypes.length)];
+                const distance = (0.5 + Math.random() * 5).toFixed(1);
+                
+                centers.push({
+                    id: `center_${i}`,
+                    name: getRandomCenterName(type, i),
+                    type: type,
+                    typeName: typeNames[type],
+                    address: getRandomAddress(location.city),
+                    phone: getRandomPhoneNumber(),
+                    distance: distance,
+                    latitude: location.latitude + (Math.random() - 0.5) * 0.02,
+                    longitude: location.longitude + (Math.random() - 0.5) * 0.02,
+                    openingHours: getRandomOpeningHours(),
+                    acceptsNewPatients: Math.random() > 0.3
+                });
+            }
+            
+            // Trier par distance
+            centers.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+            
+            resolve(centers);
+        }, 1500); // Simuler un délai réseau
+    });
+}
+
+// Fonctions utilitaires pour générer des données simulées
+function getRandomCenterName(type, index) {
+    const prefixes = {
+        'hospital': ['Hôpital', 'Centre Hospitalier', 'CHU', 'Hôpital Universitaire'],
+        'clinic': ['Clinique', 'Polyclinique', 'Centre Médical', 'Centre de Santé'],
+        'pharmacy': ['Pharmacie', 'Pharmacie de Garde', 'Officine'],
+        'lab': ['Laboratoire', 'Labo', 'Centre d\'Analyses'],
+        'doctor': ['Cabinet Médical', 'Dr.', 'Médecin Généraliste']
+    };
+    
+    const suffixes = ['du Centre', 'Principal', 'de la Ville', 'Municipal', 'Régional', 'de Garde', '24/7'];
+    const names = ['Saint-Louis', 'Saint-Antoine', 'Pasteur', 'Curie', 'Lariboisière', 'Necker', 'Bichat'];
+    
+    const prefix = prefixes[type][Math.floor(Math.random() * prefixes[type].length)];
+    const name = names[Math.floor(Math.random() * names.length)];
+    const suffix = Math.random() > 0.5 ? suffixes[Math.floor(Math.random() * suffixes.length)] : '';
+    
+    return `${prefix} ${name} ${suffix}`.trim();
+}
+
+function getRandomAddress(city) {
+    const streets = ['Rue de la République', 'Avenue des Champs-Élysées', 'Boulevard Saint-Michel', 
+                    'Rue du Faubourg Saint-Honoré', 'Avenue de la Grande Armée', 'Rue de Rivoli'];
+    const street = streets[Math.floor(Math.random() * streets.length)];
+    const number = Math.floor(Math.random() * 200) + 1;
+    
+    return `${number} ${street}, ${city}`;
+}
+
+function getRandomPhoneNumber() {
+    return `01 ${Math.floor(Math.random() * 90) + 10} ${Math.floor(Math.random() * 90) + 10} ${Math.floor(Math.random() * 90) + 10} ${Math.floor(Math.random() * 90) + 10}`;
+}
+
+function getRandomOpeningHours() {
+    const hours = [
+        'Lun-Ven: 8h-19h, Sam: 9h-13h',
+        '24h/24, 7j/7',
+        'Lun-Sam: 9h-18h',
+        'Lun-Ven: 8h30-17h30',
+        'Sur rendez-vous'
+    ];
+    return hours[Math.floor(Math.random() * hours.length)];
+}
+
+// Afficher les centres de santé
+function displayHealthCenters(centers) {
+    const centersList = document.getElementById('healthCentersList');
+    
+    if (centers.length === 0) {
+        centersList.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--dark-gray);">
+                <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <p>Aucun centre de santé trouvé à proximité.</p>
+                <button class="btn btn-outline" onclick="searchHealthCenters()" style="margin-top: 15px;">
+                    <i class="fas fa-search"></i> Élargir la recherche
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    centers.forEach(center => {
+        const isOpen = center.openingHours !== 'Sur rendez-vous';
+        const newPatients = center.acceptsNewPatients ? 'Accepte nouveaux patients' : 'Complet';
+        
+        html += `
+            <div class="health-center-card" onclick="selectCenter('${center.id}')" id="center_${center.id}">
+                <div class="center-name">${center.name}</div>
+                <div class="center-type">${center.typeName}</div>
+                <div class="center-address">
+                    <i class="fas fa-map-marker-alt"></i> ${center.address}
+                </div>
+                <div class="center-distance">
+                    <i class="fas fa-walking"></i> ${center.distance} km
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <i class="fas fa-clock"></i> ${center.openingHours}
+                    ${isOpen ? '<span style="color: var(--primary-green); margin-left: 10px;"><i class="fas fa-check-circle"></i> Ouvert</span>' : ''}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <i class="fas fa-user-md"></i> ${newPatients}
+                </div>
+                <div class="center-actions">
+                    <button class="direction-btn" onclick="event.stopPropagation(); getDirections(${center.latitude}, ${center.longitude}, '${center.name}')">
+                        <i class="fas fa-directions"></i> Itinéraire
+                    </button>
+                    <button class="call-btn" onclick="event.stopPropagation(); callCenter('${center.phone}', '${center.name}')">
+                        <i class="fas fa-phone"></i> ${center.phone}
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    centersList.innerHTML = html;
+}
+
+// Filtrer les centres
+function filterCenters(type) {
+    // Mettre à jour les boutons de filtre
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    let filteredCenters;
+    
+    if (type === 'all') {
+        filteredCenters = healthCenters;
+    } else {
+        filteredCenters = healthCenters.filter(center => center.type === type);
+    }
+    
+    // Trier par distance
+    filteredCenters.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+    
+    displayHealthCenters(filteredCenters);
+}
+
+// Sélectionner un centre
+function selectCenter(centerId) {
+    // Retirer la sélection précédente
+    document.querySelectorAll('.health-center-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Sélectionner le nouveau
+    const selectedCard = document.getElementById(`center_${centerId}`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        
+        // Faire défiler jusqu'au centre sélectionné
+        selectedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Afficher sur la carte si disponible
+        const center = healthCenters.find(c => c.id === centerId);
+        if (center && window.map) {
+            // Centrer la carte sur le centre sélectionné
+            window.map.setCenter({ lat: center.latitude, lng: center.longitude });
+            window.map.setZoom(15);
+        }
+    }
+}
+
+// Obtenir un itinéraire
+function getDirections(lat, lng, destinationName) {
+    if (!userLocation) {
+        showMessage("Veuillez d'abord activer la localisation", "error");
+        return;
+    }
+    
+    // Ouvrir Google Maps avec l'itinéraire
+    const origin = `${userLocation.latitude},${userLocation.longitude}`;
+    const destination = `${lat},${lng}`;
+    
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=walking`;
+    
+    // Ouvrir dans un nouvel onglet
+    window.open(googleMapsUrl, '_blank');
+    
+    // Alternative: essayer d'ouvrir dans l'app Google Maps
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        const appUrl = `https://maps.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&directionsmode=walking`;
+        window.open(appUrl, '_blank');
+    }
+    
+    showMessage(`Itinéraire vers ${destinationName} ouvert`, "success");
+}
+
+// Appeler un centre
+function callCenter(phoneNumber, centerName) {
+    if (confirm(`Voulez-vous appeler ${centerName} au ${phoneNumber} ?`)) {
+        // Ouvrir l'appel téléphonique
+        window.location.href = `tel:${phoneNumber.replace(/\s/g, '')}`;
+    }
+}
+
+// Rechercher des centres
+function searchHealthCenters() {
+    const searchInput = document.getElementById('searchInput');
+    const query = searchInput.value.toLowerCase().trim();
+    
+    if (!query) {
+        displayHealthCenters(healthCenters);
+        return;
+    }
+    
+    const filtered = healthCenters.filter(center => 
+        center.name.toLowerCase().includes(query) ||
+        center.typeName.toLowerCase().includes(query) ||
+        center.address.toLowerCase().includes(query)
+    );
+    
+    displayHealthCenters(filtered);
+    
+    if (filtered.length === 0) {
+        showMessage("Aucun résultat trouvé", "info");
+    }
+}
+
+// Utiliser la position actuelle
+async function useCurrentLocation() {
+    try {
+        userLocation = await getUserLocation();
+        await loadHealthCenters(userLocation);
+        showMessage("Position actualisée", "success");
+    } catch (error) {
+        showMessage("Impossible d'obtenir la position actuelle", "error");
+    }
+}
+
+// Entrer une adresse manuellement
+function enterManualLocation() {
+    const address = prompt("Entrez une adresse ou une ville:");
+    
+    if (address) {
+        // Simuler la géocodage
+        showMessage(`Recherche de centres près de ${address}`, "info");
+        
+        // Position simulée (Paris par défaut)
+        userLocation = {
+            latitude: 48.8566,
+            longitude: 2.3522,
+            city: address
+        };
+        
+        loadHealthCenters(userLocation);
+    }
+}
+
+// Charger Google Maps
+// function loadGoogleMaps(location) {
+//     // Vérifier si Google Maps est déjà chargé
+//     if (window.google && window.google.maps) {
+//         initMap(location);
+//         return;
+//     }
+    
+//     // Ne charger Google Maps que si l'utilisateur le souhaite
+//     const mapContainer = document.getElementById('mapContainer');
+//     mapContainer.style.display = 'block';
+    
+//     mapContainer.innerHTML = `
+//         <h3 style="margin-bottom: 15px;"><i class="fas fa-map"></i> Carte</h3>
+//         <div id="map" style="width: 100%; height: 300px; border-radius: var(--border-radius); background-color: var(--light-gray);">
+//             <div class="map-placeholder">
+//                 <div style="text-align: center;">
+//                     <i class="fas fa-map" style="font-size: 2rem; margin-bottom: 10px;"></i>
+//                     <p>Carte non disponible sans clé API Google Maps</p>
+//                     <button class="btn btn-outline" onclick="loadGoogleMapsAPI()" style="margin-top: 10px;">
+//                         <i class="fab fa-google"></i> Charger Google Maps
+//                     </button>
+//                 </div>
+//             </div>
+//         </div>
+//     `;
+// }
+
+// Charger lonOpenStreetMap
+function loadOpenStreetMap(location) {
+    const mapContainer = document.getElementById('mapContainer');
+    mapContainer.style.display = 'block';
+    
+    // Utiliser Leaflet.js avec OpenStreetMap (gratuit)
+    mapContainer.innerHTML = `
+        <h3 style="margin-bottom: 15px;"><i class="fas fa-map"></i> Carte</h3>
+        <div id="map" style="width: 100%; height: 300px; border-radius: var(--border-radius);"></div>
+        <div style="margin-top: 10px; text-align: center; font-size: 0.8rem; color: var(--dark-gray);">
+            Carte fournie par <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a>
+        </div>
+    `;
+    
+    // Charger Leaflet.js dynamiquement
+    if (!window.L) {
+        const leafletCSS = document.createElement('link');
+        leafletCSS.rel = 'stylesheet';
+        leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        
+        const leafletJS = document.createElement('script');
+        leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        leafletJS.onload = () => initOpenStreetMap(location);
+        
+        document.head.appendChild(leafletCSS);
+        document.head.appendChild(leafletJS);
+    } else {
+        initOpenStreetMap(location);
+    }
+}
+
+function initOpenStreetMap(location) {
+    const map = L.map('map').setView([location.latitude, location.longitude], 13);
+    
+    // Ajouter les tuiles OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Ajouter un marqueur pour la position de l'utilisateur
+    L.marker([location.latitude, location.longitude])
+        .addTo(map)
+        .bindPopup('Votre position')
+        .openPopup();
+    
+    // Ajouter des marqueurs pour les centres de santé
+    healthCenters.forEach(center => {
+        const marker = L.marker([center.latitude, center.longitude])
+            .addTo(map)
+            .bindPopup(`
+                <strong>${center.name}</strong><br>
+                ${center.address}<br>
+                ${center.distance} km<br>
+                <button onclick="getDirections(${center.latitude}, ${center.longitude}, '${center.name}')">
+                    Itinéraire
+                </button>
+            `);
+    });
+    
+    // Stocker la référence
+    window.map = map;
+}
+
+// Et dans loadHealthCenters(), remplacez:
+// loadGoogleMaps(location); → loadOpenStreetMap(location);
+
+// Initialiser la carte
+function initMap(location) {
+    const mapElement = document.getElementById('map');
+    
+    if (!mapElement || !location) return;
+    
+    const map = new google.maps.Map(mapElement, {
+        center: { lat: location.latitude, lng: location.longitude },
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false
+    });
+    
+    // Marqueur pour la position de l'utilisateur
+    new google.maps.Marker({
+        position: { lat: location.latitude, lng: location.longitude },
+        map: map,
+        title: 'Votre position',
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#4285F4',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2
+        }
+    });
+    
+    // Marqueurs pour les centres de santé
+    healthCenters.forEach(center => {
+        const marker = new google.maps.Marker({
+            position: { lat: center.latitude, lng: center.longitude },
+            map: map,
+            title: center.name,
+            icon: getMarkerIcon(center.type)
+        });
+        
+        // Info window
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="padding: 10px;">
+                    <h3 style="margin: 0 0 5px 0;">${center.name}</h3>
+                    <p style="margin: 0 0 5px 0; color: #666;">${center.address}</p>
+                    <p style="margin: 0 0 5px 0;"><strong>Distance:</strong> ${center.distance} km</p>
+                    <p style="margin: 0 0 5px 0;"><strong>Téléphone:</strong> ${center.phone}</p>
+                    <button onclick="getDirections(${center.latitude}, ${center.longitude}, '${center.name}')" 
+                            style="background: #4285F4; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                        Itinéraire
+                    </button>
+                </div>
+            `
+        });
+        
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+    });
+    
+    // Stocker la référence à la carte
+    window.map = map;
+}
+
+function getMarkerIcon(type) {
+    const icons = {
+        'hospital': '🏥',
+        'clinic': '🏨',
+        'pharmacy': '💊',
+        'lab': '🔬',
+        'doctor': '👨‍⚕️'
+    };
+    
+    return {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: type === 'hospital' ? '#EA4335' : 
+                  type === 'clinic' ? '#FBBC05' : 
+                  type === 'pharmacy' ? '#34A853' :
+                  type === 'lab' ? '#4285F4' : '#9C27B0',
+        fillOpacity: 1,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 2
+    };
+}
+
+// Partager la localisation
+function shareLocation() {
+    if (!userLocation) {
+        showMessage("Aucune position disponible", "error");
+        return;
+    }
+    
+    const shareData = {
+        title: 'Centres de santé à proximité',
+        text: `J'ai trouvé des centres de santé près de ${userLocation.city} avec l'application Alerte Anémie`,
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData)
+            .then(() => showMessage("Partagé avec succès", "success"))
+            .catch(error => console.log('Erreur de partage:', error));
+    } else {
+        // Fallback: copier dans le presse-papier
+        navigator.clipboard.writeText(shareData.text + " " + shareData.url)
+            .then(() => showMessage("Lien copié dans le presse-papier", "success"))
+            .catch(() => {
+                // Fallback manuel
+                prompt("Copiez ce lien:", shareData.url);
+            });
+    }
+}
+
     </script>
 </body>
 </html>
